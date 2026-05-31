@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TP6-S Web Tool</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="hdr-left">
+    <h1>TP6-S Web Tool</h1>
+    <span id="ble-dot" class="dot off">●</span>
+    <span id="ble-name">Non connecté</span>
+  </div>
+  <div class="hdr-right">
+    <button id="btn-connect" class="btn-p">Connecter</button>
+    <button id="btn-disconnect" class="btn-s" hidden>Déconnecter</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="image"  role="tab">Image</button>
+  <button class="tab-btn"        data-tab="text"   role="tab">Texte</button>
+  <button class="tab-btn"        data-tab="draw"   role="tab">Dessin</button>
+  <button class="tab-btn"        data-tab="test"   role="tab">Test / Feed</button>
+  <button class="tab-btn"        data-tab="uart"   role="tab">Diagnostic / UART</button>
+</nav>
+
+<div id="no-ble" class="warn-banner" hidden>
+  ⚠️ <strong>Web Bluetooth non disponible.</strong>
+  Utilisez <strong>Chrome</strong> ou <strong>Edge</strong> (desktop ou Android). Firefox et Safari ne supportent pas Web Bluetooth.
+</div>
+
+<div class="layout">
+<main>
+
+  <!-- ═══ IMAGE ══════════════════════════════════════════════════════ -->
+  <section id="tab-image" class="tab-panel">
+    <h2>Imprimer une image</h2>
+
+    <div class="row">
+      <label>Fichier <small>(JPG PNG GIF PBM)</small></label>
+      <input type="file" id="img-file" accept="image/*,.pbm">
+    </div>
+    <div class="row">
+      <label>Rotation</label>
+      <select id="img-rotate">
+        <option value="0">0°</option>
+        <option value="90">90°</option>
+        <option value="180">180°</option>
+        <option value="270">270°</option>
+      </select>
+    </div>
+    <div class="row">
+      <label></label>
+      <label style="min-width:0">
+        <input type="checkbox" id="img-dither" checked>
+        Floyd-Steinberg (dithering)
+      </label>
+    </div>
+    <div class="row" id="row-thresh">
+      <label>Seuil <span id="img-thresh-v">128</span></label>
+      <input type="range" id="img-thresh" min="1" max="255" value="128">
+    </div>
+    <div class="row">
+      <label>Densité <span id="img-density-v">10</span></label>
+      <input type="range" id="img-density" min="1" max="15" value="10">
+    </div>
+    <div class="row">
+      <label>Vitesse <span id="img-speed-v">3</span></label>
+      <input type="range" id="img-speed" min="1" max="5" value="3">
+    </div>
+    <div class="row">
+      <label>Feed <span id="img-feed-v">85</span> lignes</label>
+      <input type="range" id="img-feed" min="0" max="300" value="85">
+    </div>
+
+    <div class="preview-wrap">
+      <canvas id="img-preview" class="preview-canvas"></canvas>
+      <p id="img-info" class="img-info"></p>
+    </div>
+
+    <button id="btn-img-print" class="btn-print" disabled>Imprimer</button>
+  </section>
+
+  <!-- ═══ TEXTE ══════════════════════════════════════════════════════ -->
+  <section id="tab-text" class="tab-panel" hidden>
+    <h2>Imprimer du texte</h2>
+
+    <div class="row">
+      <label>Texte</label>
+      <textarea id="txt-input" rows="5" placeholder="Entrez votre texte ici…"></textarea>
+    </div>
+    <div class="row">
+      <label>Taille police</label>
+      <select id="txt-size">
+        <option value="8">8 px (×1)</option>
+        <option value="16">16 px (×2)</option>
+        <option value="24">24 px (×3)</option>
+        <option value="32" selected>32 px (×4)</option>
+        <option value="48">48 px (×6)</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Densité <span id="txt-density-v">10</span></label>
+      <input type="range" id="txt-density" min="1" max="15" value="10">
+    </div>
+    <div class="row">
+      <label>Vitesse <span id="txt-speed-v">3</span></label>
+      <input type="range" id="txt-speed" min="1" max="5" value="3">
+    </div>
+    <div class="row">
+      <label>Feed <span id="txt-feed-v">85</span> lignes</label>
+      <input type="range" id="txt-feed" min="0" max="300" value="85">
+    </div>
+
+    <div class="preview-wrap">
+      <canvas id="txt-preview" class="preview-canvas" hidden></canvas>
+    </div>
+
+    <button id="btn-txt-print" class="btn-print" disabled>Imprimer</button>
+  </section>
+
+  <!-- ═══ DESSIN ═════════════════════════════════════════════════════ -->
+  <section id="tab-draw" class="tab-panel" hidden>
+    <h2>Dessiner et imprimer</h2>
+
+    <div class="draw-toolbar">
+      <label>
+        <input type="radio" name="draw-tool" value="black" checked> ✏️ Noir
+      </label>
+      <label>
+        <input type="radio" name="draw-tool" value="white"> ⬜ Gomme
+      </label>
+      <label>
+        Taille :
+        <input type="range" id="draw-sz" min="1" max="40" value="6" style="width:80px">
+        <span id="draw-sz-v">6</span> px
+      </label>
+      <button id="btn-draw-clear" class="btn-s">Effacer tout</button>
+    </div>
+
+    <canvas id="draw-canvas" class="draw-canvas" width="576" height="576"></canvas>
+
+    <div class="row" style="margin-top:12px">
+      <label>Densité <span id="draw-density-v">10</span></label>
+      <input type="range" id="draw-density" min="1" max="15" value="10">
+    </div>
+    <div class="row">
+      <label>Vitesse <span id="draw-speed-v">3</span></label>
+      <input type="range" id="draw-speed" min="1" max="5" value="3">
+    </div>
+    <div class="row">
+      <label>Feed <span id="draw-feed-v">85</span> lignes</label>
+      <input type="range" id="draw-feed" min="0" max="300" value="85">
+    </div>
+
+    <button id="btn-draw-print" class="btn-print" disabled>Imprimer le dessin</button>
+  </section>
+
+  <!-- ═══ TEST / FEED ════════════════════════════════════════════════ -->
+  <section id="tab-test" class="tab-panel" hidden>
+    <h2>Test et calibration</h2>
+
+    <div class="section">
+      <h3>Avance papier</h3>
+      <div class="row">
+        <label>Lignes <span id="feed-lines-v">85</span></label>
+        <input type="range" id="feed-lines" min="10" max="400" value="85">
+      </div>
+      <button id="btn-feed" class="btn-s" disabled>Avancer le papier</button>
+    </div>
+
+    <div class="section">
+      <h3>Motif de test</h3>
+      <div class="row">
+        <label>Motif</label>
+        <select id="test-pattern">
+          <option value="black">Noir (plein 0xFF)</option>
+          <option value="bars" selected>Rayures 4 px</option>
+          <option value="white">Blanc (0x00)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Largeur papier</label>
+        <select id="test-bpl">
+          <option value="72" selected>72 o / 576 px (80 mm)</option>
+          <option value="48">48 o / 384 px (58 mm)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Hauteur <span id="test-h-v">64</span> lignes</label>
+        <input type="range" id="test-h" min="8" max="200" value="64" step="8">
+      </div>
+      <div class="row">
+        <label>Densité <span id="test-density-v">12</span></label>
+        <input type="range" id="test-density" min="1" max="15" value="12">
+      </div>
+      <div class="row">
+        <label>Vitesse <span id="test-speed-v">3</span></label>
+        <input type="range" id="test-speed" min="1" max="5" value="3">
+      </div>
+      <button id="btn-test-print" class="btn-print" disabled>Imprimer le motif</button>
+    </div>
+  </section>
+
+  <!-- ═══ DIAGNOSTIC / UART ══════════════════════════════════════════ -->
+  <section id="tab-uart" class="tab-panel" hidden>
+    <h2>Diagnostic / Terminal UART</h2>
+
+    <div class="btn-row" style="margin-top:0">
+      <button id="btn-info" class="btn-s" disabled>Lire services GATT</button>
+    </div>
+
+    <div id="uart-log" class="uart-log" aria-live="polite"></div>
+
+    <div class="uart-inp">
+      <input type="text" id="uart-input"
+             placeholder="XX XX XX  |  cus CMD [HH …]  |  speed N  |  density N  |  feed [N]  |  hex"
+             disabled>
+      <button id="btn-uart-send" class="btn-s" disabled>Envoyer</button>
+    </div>
+
+    <p class="hint">
+      <code>cus 02 55 00</code> feed 85 lig &nbsp;·&nbsp;
+      <code>cus 04 08</code> densité 8 &nbsp;·&nbsp;
+      <code>cus 0A 03</code> vitesse 3 &nbsp;·&nbsp;
+      <code>hex</code> bascule hex/ascii
+    </p>
+  </section>
+
+</main>
+
+<!-- ── LOG PANEL ───────────────────────────────────────────────────── -->
+<aside class="log-panel">
+  <div class="log-hdr">
+    <span>Journal</span>
+    <button id="btn-clrlog" class="btn-icon" title="Effacer le journal">✕</button>
+  </div>
+  <div id="log-out" class="log-out" aria-live="polite"></div>
+  <div id="prog-wrap" class="prog-wrap" hidden>
+    <progress id="prog-bar" max="100" value="0"></progress>
+    <span id="prog-pct">0%</span>
+  </div>
+</aside>
+</div><!-- .layout -->
+
+<!-- ── MODAL CONFIRMATION ──────────────────────────────────────────── -->
+<div id="modal" class="modal-bg" hidden role="dialog" aria-modal="true" aria-labelledby="modal-msg">
+  <div class="modal-box">
+    <p id="modal-msg"></p>
+    <div class="modal-btns">
+      <button id="modal-ok"     class="btn-print">OK</button>
+      <button id="modal-cancel" class="btn-s">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+/* TP6-S Web Tool — style.css */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --border: #d0d5dd;
+  --accent: #2563eb;
+  --accent-h: #1d4ed8;
+  --green: #16a34a;
+  --green-h: #15803d;
+  --danger: #dc2626;
+  --text: #111827;
+  --dim: #6b7280;
+  --font: system-ui, -apple-system, sans-serif;
+  --mono: 'Cascadia Code', 'Consolas', 'Menlo', monospace;
+  --r: 6px;
+}
+
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+
+/* ─── HEADER ─────────────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.hdr-left { display: flex; align-items: center; gap: 10px; }
+h1 { font-size: 15px; font-weight: 600; }
+.dot { font-size: 13px; transition: color .3s; }
+.dot.on  { color: #16a34a; }
+.dot.off { color: #9ca3af; }
+#ble-name { font-size: 13px; color: var(--dim); }
+.hdr-right { display: flex; gap: 8px; }
+
+/* ─── TABS ───────────────────────────────────────── */
+.tabs {
+  display: flex; padding: 0 12px; background: var(--surface);
+  border-bottom: 1px solid var(--border); overflow-x: auto; gap: 0;
+}
+.tab-btn {
+  padding: 10px 16px; background: none; border: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
+  font-size: 13px; font-family: var(--font); color: var(--dim);
+  white-space: nowrap; transition: color .15s, border-color .15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+/* ─── WARNING BANNER ─────────────────────────────── */
+.warn-banner {
+  background: #fef9c3; border-bottom: 1px solid #fde047;
+  color: #854d0e; padding: 10px 16px; font-size: 13px;
+}
+.warn-banner[hidden] { display: none; }
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+.layout { display: flex; height: calc(100vh - 86px); overflow: hidden; }
+main { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.tab-panel { max-width: 640px; }
+.tab-panel[hidden] { display: none; }
+h2 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--dim);
+     text-transform: uppercase; letter-spacing: .05em; }
+
+/* ─── FORM FIELDS ────────────────────────────────── */
+.row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.row label { min-width: 160px; font-size: 13px; color: var(--dim); flex-shrink: 0; }
+.row input[type=range] { flex: 1; accent-color: var(--accent); }
+.row input[type=text], .row select, .row textarea {
+  flex: 1; padding: 6px 8px; border: 1px solid var(--border);
+  border-radius: var(--r); font-size: 13px; font-family: var(--font);
+}
+.row textarea { resize: vertical; }
+.row input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); }
+.row.indent { padding-left: 172px; }
+.section { margin-bottom: 20px; }
+.section h3 {
+  font-size: 12px; font-weight: 600; margin-bottom: 10px;
+  color: var(--dim); text-transform: uppercase; letter-spacing: .05em;
+}
+
+/* ─── BUTTONS ────────────────────────────────────── */
+button {
+  cursor: pointer; border: none; border-radius: var(--r);
+  padding: 7px 14px; font-size: 13px; font-family: var(--font); transition: background .15s;
+}
+.btn-p { background: var(--accent); color: #fff; }
+.btn-p:hover { background: var(--accent-h); }
+.btn-s { background: #e5e7eb; color: var(--text); }
+.btn-s:hover { background: #d1d5db; }
+.btn-print { background: var(--green); color: #fff; margin-top: 14px; }
+.btn-print:hover { background: var(--green-h); }
+.btn-icon { background: none; padding: 2px 6px; color: var(--dim); }
+.btn-icon:hover { color: var(--text); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+.btn-row { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ─── PREVIEW CANVAS ─────────────────────────────── */
+.preview-wrap { margin: 12px 0; }
+.preview-canvas {
+  max-width: 100%; border: 1px solid var(--border);
+  border-radius: var(--r); display: block; background: #fff;
+}
+.img-info { font-size: 11px; color: var(--dim); margin-top: 4px; font-family: var(--mono); }
+
+/* ─── DRAW CANVAS ────────────────────────────────── */
+.draw-toolbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 10px; }
+.draw-toolbar label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.draw-canvas {
+  border: 2px solid var(--border); cursor: crosshair; display: block;
+  max-width: 100%; touch-action: none; background: #fff; border-radius: var(--r);
+}
+
+/* ─── LOG PANEL ──────────────────────────────────── */
+.log-panel {
+  width: 290px; flex-shrink: 0; border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; background: var(--surface);
+}
+.log-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 12px; border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--dim);
+}
+.log-out {
+  flex: 1; overflow-y: auto; padding: 8px 12px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.7; color: var(--text);
+}
+.log-line { word-break: break-all; }
+.log-line.err { color: var(--danger); }
+.prog-wrap {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+.prog-wrap[hidden] { display: none; }
+progress { flex: 1; height: 6px; border-radius: 3px; accent-color: var(--green); }
+#prog-pct { font-size: 11px; color: var(--dim); min-width: 30px; text-align: right; }
+
+/* ─── UART ───────────────────────────────────────── */
+.uart-log {
+  min-height: 160px; max-height: 300px; overflow-y: auto;
+  background: #1e1e2e; color: #cdd6f4; font-family: var(--mono); font-size: 11px;
+  padding: 10px; border-radius: var(--r); margin: 12px 0; line-height: 1.7;
+  white-space: pre-wrap; word-break: break-all;
+}
+.uart-inp { display: flex; gap: 8px; }
+.uart-inp input {
+  flex: 1; font-family: var(--mono); font-size: 12px;
+  padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--r);
+}
+.hint { font-size: 12px; color: var(--dim); margin-top: 8px; line-height: 1.8; }
+code { font-family: var(--mono); background: #f3f4f6; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+
+/* ─── MODAL ──────────────────────────────────────── */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal-bg[hidden] { display: none; }
+.modal-box {
+  background: var(--surface); border-radius: var(--r); padding: 24px;
+  max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,.25);
+}
+#modal-msg { margin-bottom: 20px; font-size: 14px; line-height: 1.7; white-space: pre-line; }
+.modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ─── RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 700px) {
+  .layout { flex-direction: column; height: auto; }
+  .log-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); height: 180px; }
+}
