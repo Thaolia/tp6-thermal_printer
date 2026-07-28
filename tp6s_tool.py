@@ -46,7 +46,8 @@ from bleak import BleakScanner, BleakClient
 
 CMD_PRINT_IMAGE = 0x00
 CMD_FEED        = 0x02
-CMD_SET_DENSITY = 0x04
+CMD_SET_DENSITY = 0x09   # 0x04 est ACKe mais ignore par le firmware ; l'echo de
+                         # densite dans l'ACK image ne bouge qu'avec 0x09
 CMD_SET_SPEED   = 0x0A
 CMD_BLE_TOKENS  = 0x80
 

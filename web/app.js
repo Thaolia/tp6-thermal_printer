@@ -9,7 +9,8 @@
 // ─────────────────────────────────────────────────────────────
 var CMD_PRINT_IMAGE = 0x00;
 var CMD_FEED        = 0x02;
-var CMD_SET_DENSITY = 0x04;
+var CMD_SET_DENSITY = 0x09; // 0x04 est ACKé mais ignoré par le firmware ; l'écho de
+                            // densité dans l'ACK image ne bouge qu'avec 0x09
 var CMD_SET_SPEED   = 0x0A;
 var CMD_BLE_TOKENS  = 0x80;
 
