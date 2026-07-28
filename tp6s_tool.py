@@ -700,6 +700,13 @@ async def cmd_print_raster(addr, path, density=14, speed=5, feed=150,
     img = Image.open(path)
     print(f"Image : {path}  {img.size[0]}x{img.size[1]}  mode={img.mode}")
 
+    # Alpha = fond blanc (sinon convert('L') ignore l'alpha et peut tout noircir)
+    if img.mode in ('RGBA', 'LA', 'PA') or (img.mode == 'P' and 'transparency' in img.info):
+        img = img.convert('RGBA')
+        bg = Image.new('RGBA', img.size, (255, 255, 255, 255))
+        img = Image.alpha_composite(bg, img)
+        print("Alpha composite sur fond blanc")
+
     if rotate:
         img = img.rotate(rotate, expand=True)
         print(f"Rotation {rotate}°  → {img.size[0]}x{img.size[1]}")
