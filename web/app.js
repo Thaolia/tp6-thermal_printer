@@ -110,7 +110,8 @@ var isConnected = false;
 var isPrinting  = false;
 var uartHexMode = true;
 
-// Connexion BLE — filtre sur namePrefix "TP6-S" (règle : filtrer par nom, pas UUID)
+// Connexion BLE — filtre sur namePrefix "TP6" (règle : filtrer par nom, pas UUID).
+// "TP6-S" ne matche jamais : l'imprimante s'annonce "TP6" tout court.
 async function connect() {
   if (!navigator.bluetooth) {
     document.getElementById('no-ble').hidden = false;
@@ -118,7 +119,7 @@ async function connect() {
   }
   try {
     bleDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'TP6-S' }],
+      filters: [{ namePrefix: 'TP6' }],
       optionalServices: [0xfff0, 0xff00]
     });
     bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
