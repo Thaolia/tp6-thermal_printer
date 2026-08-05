@@ -14,7 +14,8 @@ Two interfaces, same protocol:
 
 ## Features
 
-- **BLE scan** — discover TP6-S printers by device name prefix.
+- **BLE scan** — discover TP6-S printers (web app: by device name prefix `"TP6"`; CLI: by
+  advertised GATT service UUID).
 - **Raster printing** — images resized to 576 px wide, 1-bpp Floyd-Steinberg dither (or
   fixed threshold). Supports JPEG, PNG, PBM (CLI) and any format accepted by `<canvas>`
   (web).
@@ -134,6 +135,10 @@ Key opcodes: `0x00` print image · `0x02` feed · `0x09` set density · `0x0A` s
 > the working opcode — and the one the `cus 09 08` example in `tp6s_tool.py`'s UART
 > help already uses.
 
+**Full reference** — GATT UUIDs and fallbacks, ACK telemetry decoding (battery voltage,
+density echo, temperature), the 24-line-per-frame ceiling, protocol constraints, and a
+troubleshooting table: see [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+
 ---
 
 ## Project Structure
@@ -145,6 +150,8 @@ tp6-s/
 │   ├── tp6s.html     # Web app entry point (open in Chrome/Edge)
 │   ├── app.js        # Web Bluetooth logic — port of tp6s_tool.py
 │   └── style.css     # Stylesheet
+├── docs/
+│   └── PROTOCOL.md   # Full CUS protocol reference
 ├── LICENSE
 └── README.md
 ```
