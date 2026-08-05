@@ -127,8 +127,12 @@ The TP6-S uses a proprietary **CUS** framing over BLE GATT:
 | Print width | 576 px = 72 bytes/line |
 | Print bit convention | bit `1` = print (ink), `0` = blank |
 
-Key opcodes: `0x00` print image · `0x02` feed · `0x04` set density · `0x0A` set speed ·
+Key opcodes: `0x00` print image · `0x02` feed · `0x09` set density · `0x0A` set speed ·
 `0x80` BLE flow-control tokens.
+
+> Note: `0x04` is ACKed by the firmware but ignored — density never changes. `0x09` is
+> the working opcode — and the one the `cus 09 08` example in `tp6s_tool.py`'s UART
+> help already uses.
 
 ---
 

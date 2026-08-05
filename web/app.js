@@ -9,7 +9,8 @@
 // ─────────────────────────────────────────────────────────────
 var CMD_PRINT_IMAGE = 0x00;
 var CMD_FEED        = 0x02;
-var CMD_SET_DENSITY = 0x04;
+var CMD_SET_DENSITY = 0x09; // 0x04 est ACKé mais ignoré par le firmware ; l'écho de
+                            // densité dans l'ACK image ne bouge qu'avec 0x09
 var CMD_SET_SPEED   = 0x0A;
 var CMD_BLE_TOKENS  = 0x80;
 
@@ -109,7 +110,8 @@ var isConnected = false;
 var isPrinting  = false;
 var uartHexMode = true;
 
-// Connexion BLE — filtre sur namePrefix "TP6-S" (règle : filtrer par nom, pas UUID)
+// Connexion BLE — filtre sur namePrefix "TP6" (règle : filtrer par nom, pas UUID).
+// "TP6-S" ne matche jamais : l'imprimante s'annonce "TP6" tout court.
 async function connect() {
   if (!navigator.bluetooth) {
     document.getElementById('no-ble').hidden = false;
@@ -117,7 +119,7 @@ async function connect() {
   }
   try {
     bleDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'TP6-S' }],
+      filters: [{ namePrefix: 'TP6' }],
       optionalServices: [0xfff0, 0xff00]
     });
     bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
