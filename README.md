@@ -16,9 +16,13 @@ Two interfaces, same protocol:
 
 - **BLE scan** — discover TP6-S printers (web app: by device name prefix `"TP6"`; CLI: by
   advertised GATT service UUID).
-- **Raster printing** — images resized to 576 px wide, 1-bpp Floyd-Steinberg dither (or
-  fixed threshold). Supports JPEG, PNG, PBM (CLI) and any format accepted by `<canvas>`
-  (web).
+- **Raster printing** — images resized to 576 px wide, 1-bpp binarisation. Supports JPEG,
+  PNG, PBM (CLI) and any format accepted by `<canvas>` (web).
+- **15 dither algorithms** (web only) — simple threshold; 8 error-diffusion kernels
+  (Floyd-Steinberg, Stucki, Atkinson, Jarvis-Judice-Ninke, Burkes, Sierra, Sierra Two-Row,
+  Sierra Lite); 5 ordered matrices (Bayer 2×2/4×4/8×8/16×16, Halton 64×64); halftone
+  (dot screen). Plus pixelation (block downscale) and a tonal bias curve, with a
+  per-algorithm threshold, and optional serpentine scanning for error diffusion.
 - **Text printing** — converts a string to a raster bitmap via a built-in font.
 - **Draw canvas** (web only) — freehand drawing on a 576 px canvas, print directly.
 - **Paper feed** — advance N dot-lines.
@@ -106,8 +110,9 @@ python tp6s_tool.py feed AA:BB:CC:DD:EE:FF 32
 | **Test / Feed** | Test patterns and paper feed controls. |
 | **Diagnostic** | Raw UART terminal over BLE. |
 
-> The web app reimplements the same Floyd-Steinberg dither and CUS framing as the Python
-> CLI. BLE chunk size is capped at 20 bytes (Chrome ATT MTU limit).
+> The web app implements the same CUS framing as the Python CLI, plus a wider choice of
+> dither algorithms (see Features above; the CLI only offers Floyd-Steinberg or a fixed
+> threshold). BLE chunk size is capped at 20 bytes (Chrome ATT MTU limit).
 
 ---
 
@@ -149,7 +154,10 @@ tp6-s/
 ├── web/
 │   ├── tp6s.html     # Web app entry point (open in Chrome/Edge)
 │   ├── app.js        # Web Bluetooth logic — port of tp6s_tool.py
+│   ├── dither.js     # Dither algorithms (matrices, kernels, registry, pipeline)
 │   └── style.css     # Stylesheet
+├── tests/
+│   └── dither-ramp.js # Node harness for web/dither.js (run: node tests/dither-ramp.js)
 ├── docs/
 │   └── PROTOCOL.md   # Full CUS protocol reference
 ├── LICENSE

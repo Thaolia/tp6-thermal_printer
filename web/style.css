@@ -74,6 +74,7 @@ h2 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--dim);
 .row textarea { resize: vertical; }
 .row input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); }
 .row.indent { padding-left: 172px; }
+.row[hidden] { display: none; }
 .section { margin-bottom: 20px; }
 .section h3 {
   font-size: 12px; font-weight: 600; margin-bottom: 10px;
