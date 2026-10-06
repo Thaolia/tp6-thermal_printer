@@ -54,15 +54,31 @@
       </select>
     </div>
     <div class="row">
-      <label></label>
-      <label style="min-width:0">
-        <input type="checkbox" id="img-dither" checked>
-        Floyd-Steinberg (dithering)
-      </label>
+      <label>Algorithme</label>
+      <select id="img-algo"></select>
     </div>
-    <div class="row" id="row-thresh">
+    <div class="row">
+      <label>Pixelisation <span id="img-pixel-v">1</span> px</label>
+      <input type="range" id="img-pixel" min="1" max="16" step="1" value="1">
+    </div>
+    <div class="row">
+      <label>Tonalité <span id="img-bias-v">0.50</span></label>
+      <input type="range" id="img-bias" min="0.01" max="0.99" step="0.01" value="0.50">
+    </div>
+    <div class="row">
       <label>Seuil <span id="img-thresh-v">128</span></label>
       <input type="range" id="img-thresh" min="1" max="255" value="128">
+    </div>
+    <div class="row indent" id="row-serpentine">
+      <label></label>
+      <label style="min-width:0">
+        <input type="checkbox" id="img-serpentine">
+        Balayage serpentin
+      </label>
+    </div>
+    <div class="row indent" id="row-cell">
+      <label>Cellule <span id="img-cell-v">8</span> px</label>
+      <input type="range" id="img-cell" min="2" max="24" step="1" value="8">
     </div>
     <div class="row">
       <label>Densité <span id="img-density-v">10</span></label>
@@ -258,6 +274,7 @@
   </div>
 </div>
 
+<script src="dither.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

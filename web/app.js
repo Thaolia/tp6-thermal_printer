@@ -322,49 +322,18 @@ async function doPrint(data, bpl, height, opts) {
 // IMAGERIE — Canvas → 1bpp  (tp6s_tool.py : cmd_print_raster 691)
 // ─────────────────────────────────────────────────────────────
 
-// Floyd-Steinberg ou seuil → Uint8Array 1bpp, bit=1 = imprimé (noir)
+// Tramage → Uint8Array 1bpp, bit=1 = imprimé (noir)
 // Équivalent du XOR 0xFF de tp6s_tool.py:727 (PIL mode '1' inversé)
-function packBitmap(rgbaData, width, height, useDither, threshold) {
-  var bpl    = Math.ceil(width / 8);
-  var result = new Uint8Array(bpl * height); // pré-alloué
-
-  // Extraction luminance
-  var lum = new Float32Array(width * height);
-  for (var i = 0; i < width * height; i++) {
-    lum[i] = 0.299 * rgbaData[i * 4] + 0.587 * rgbaData[i * 4 + 1] + 0.114 * rgbaData[i * 4 + 2];
-  }
-
-  if (useDither) {
-    // Floyd-Steinberg
-    for (var y = 0; y < height; y++) {
-      for (var x = 0; x < width; x++) {
-        var idx     = y * width + x;
-        var isBlack = lum[idx] < 128;
-        var newVal  = isBlack ? 0 : 255;
-        var err     = lum[idx] - newVal;
-        if (x + 1 < width)          lum[y * width + x + 1]           += err * 7 / 16;
-        if (y + 1 < height) {
-          if (x > 0)                lum[(y + 1) * width + x - 1]     += err * 3 / 16;
-                                    lum[(y + 1) * width + x]          += err * 5 / 16;
-          if (x + 1 < width)        lum[(y + 1) * width + x + 1]     += err * 1 / 16;
-        }
-        if (isBlack) result[y * bpl + (x >> 3)] |= 0x80 >> (x & 7);
-      }
-    }
-  } else {
-    for (var y = 0; y < height; y++) {
-      for (var x = 0; x < width; x++) {
-        if (lum[y * width + x] < threshold) {
-          result[y * bpl + (x >> 3)] |= 0x80 >> (x & 7);
-        }
-      }
-    }
-  }
-  return result;
+// opts = { algo, threshold, pixel, bias, serpentine, cell } — voir dither.js
+// Défaut { algo:'threshold', threshold:128 } = comportement identique à
+// l'ancien packBitmap(…, false, 128), utilisé par renderText et l'onglet Dessin.
+function packBitmap(rgbaData, width, height, opts) {
+  return ditherToBits(rgbaData, width, height, opts || { algo: 'threshold', threshold: 128 });
 }
 
 // Traitement d'un ImageBitmap → {data, bpl, height}  (tp6s_tool.py : 700-729)
-async function processImageBitmap(bitmap, rotDeg, useDither, threshold) {
+// opts = { algo, threshold, pixel, bias, serpentine, cell } — voir dither.js
+async function processImageBitmap(bitmap, rotDeg, opts) {
   // Rotation sur canvas temporaire
   var sw = bitmap.width, sh = bitmap.height;
   if (rotDeg === 90 || rotDeg === 270) { var tmp = sw; sw = sh; sh = tmp; }
@@ -386,7 +355,7 @@ async function processImageBitmap(bitmap, rotDeg, useDither, threshold) {
   wx.drawImage(rotC, 0, 0, PRINT_W, newH);
 
   var idata = wx.getImageData(0, 0, PRINT_W, newH);
-  var packed = packBitmap(idata.data, PRINT_W, newH, useDither, threshold);
+  var packed = packBitmap(idata.data, PRINT_W, newH, opts);
   return { data: packed, bpl: BPL, height: newH };
 }
 
@@ -461,7 +430,7 @@ function renderText(text, fontSize) {
   }
 
   var idata = cx.getImageData(0, 0, PRINT_W, totalH);
-  return { data: packBitmap(idata.data, PRINT_W, totalH, false, 128), bpl: BPL, height: totalH };
+  return { data: packBitmap(idata.data, PRINT_W, totalH, { algo: 'threshold', threshold: 128 }), bpl: BPL, height: totalH };
 }
 
 // Génération motifs test  (tp6s_tool.py : cmd_test_print 548)
@@ -621,10 +590,12 @@ function updateConnUI(connected) {
 // ─────────────────────────────────────────────────────────────
 // SLIDERS — mise à jour valeur affichée
 // ─────────────────────────────────────────────────────────────
-function wireSlider(sid, vid) {
+function wireSlider(sid, vid, decimals) {
   var s = document.getElementById(sid);
   var v = document.getElementById(vid);
-  s.addEventListener('input', function() { v.textContent = s.value; });
+  s.addEventListener('input', function() {
+    v.textContent = (decimals != null) ? parseFloat(s.value).toFixed(decimals) : s.value;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -649,12 +620,16 @@ var _threshTimer = null;
 
 function getImgOpts() {
   return {
-    rotate:    parseInt(document.getElementById('img-rotate').value) || 0,
-    dither:    document.getElementById('img-dither').checked,
-    threshold: parseInt(document.getElementById('img-thresh').value),
-    density:   parseInt(document.getElementById('img-density').value),
-    speed:     parseInt(document.getElementById('img-speed').value),
-    feed:      parseInt(document.getElementById('img-feed').value)
+    rotate:     parseInt(document.getElementById('img-rotate').value) || 0,
+    algo:       document.getElementById('img-algo').value,
+    threshold:  parseInt(document.getElementById('img-thresh').value),
+    pixel:      parseInt(document.getElementById('img-pixel').value),
+    bias:       parseFloat(document.getElementById('img-bias').value),
+    serpentine: document.getElementById('img-serpentine').checked,
+    cell:       parseInt(document.getElementById('img-cell').value),
+    density:    parseInt(document.getElementById('img-density').value),
+    speed:      parseInt(document.getElementById('img-speed').value),
+    feed:       parseInt(document.getElementById('img-feed').value)
   };
 }
 
@@ -662,29 +637,70 @@ async function reprocessImg() {
   if (!lastBitmap) return;
   var o = getImgOpts();
   try {
-    imgData = await processImageBitmap(lastBitmap, o.rotate, o.dither, o.threshold);
+    imgData = await processImageBitmap(lastBitmap, o.rotate, o);
     updateImgPreview();
   } catch (err) { log('Retraitement image : ' + err.message, true); }
 }
 
+// Peuple <select id="img-algo"> depuis le registre dither.js, groupé par famille
+function populateAlgoSelect() {
+  var sel = document.getElementById('img-algo');
+  var groups = {};
+  DITHER_ORDER.forEach(function(id) {
+    var algo = DITHER_ALGOS[id];
+    if (!groups[algo.group]) {
+      groups[algo.group] = document.createElement('optgroup');
+      groups[algo.group].label = algo.group;
+      sel.appendChild(groups[algo.group]);
+    }
+    var opt = document.createElement('option');
+    opt.value = id; opt.textContent = algo.label;
+    groups[algo.group].appendChild(opt);
+  });
+  sel.value = 'floyd-steinberg'; // défaut identique à l'ancienne checkbox cochée
+}
+
+// Affiche/masque les lignes de réglage propres à l'algorithme sélectionné
+function syncAlgoRows() {
+  var kind = DITHER_ALGOS[document.getElementById('img-algo').value].kind;
+  document.getElementById('row-serpentine').hidden = kind !== 'diffusion';
+  document.getElementById('row-cell').hidden        = kind !== 'halftone';
+}
+
+// Active/désactive les contrôles de tramage — inutiles sur une entrée PBM,
+// qui contourne processImageBitmap et arrive déjà en 1bpp (app.js:665 imgData null,
+// reprocessImg no-op sans lastBitmap)
+function setImgControlsEnabled(enabled) {
+  ['img-algo', 'img-thresh', 'img-pixel', 'img-bias', 'img-serpentine', 'img-cell'].forEach(function(id) {
+    document.getElementById(id).disabled = !enabled;
+  });
+}
+
 function initImageTab() {
   wireSlider('img-thresh',  'img-thresh-v');
+  wireSlider('img-pixel',   'img-pixel-v');
+  wireSlider('img-bias',    'img-bias-v', 2); // step=0.01 → toujours 2 décimales (0.50, pas 0.5)
+  wireSlider('img-cell',    'img-cell-v');
   wireSlider('img-density', 'img-density-v');
   wireSlider('img-speed',   'img-speed-v');
   wireSlider('img-feed',    'img-feed-v');
 
-  // Masquer le seuil quand Floyd-Steinberg est activé
-  var dCheck  = document.getElementById('img-dither');
-  var rowThr  = document.getElementById('row-thresh');
-  var syncRow = function() { rowThr.style.visibility = dCheck.checked ? 'hidden' : 'visible'; };
-  syncRow();
-  dCheck.addEventListener('change', function() { syncRow(); reprocessImg(); });
+  populateAlgoSelect();
+  syncAlgoRows();
+
+  document.getElementById('img-algo').addEventListener('change', function() {
+    syncAlgoRows();
+    reprocessImg();
+  });
 
   document.getElementById('img-rotate').addEventListener('change', reprocessImg);
+  document.getElementById('img-serpentine').addEventListener('change', reprocessImg);
 
-  document.getElementById('img-thresh').addEventListener('input', function() {
-    clearTimeout(_threshTimer);
-    _threshTimer = setTimeout(reprocessImg, 350);
+  ['img-thresh', 'img-pixel', 'img-bias', 'img-cell'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      clearTimeout(_threshTimer);
+      _threshTimer = setTimeout(reprocessImg, 350);
+    });
   });
 
   document.getElementById('img-file').addEventListener('change', async function(e) {
@@ -695,10 +711,12 @@ function initImageTab() {
     try {
       if (file.name.toLowerCase().endsWith('.pbm')) {
         imgData = await parsePbm(file);
+        setImgControlsEnabled(false); // PBM déjà 1bpp — le tramage ne s'applique pas
       } else {
+        setImgControlsEnabled(true);
         lastBitmap = await createImageBitmap(file);
         var o = getImgOpts();
-        imgData = await processImageBitmap(lastBitmap, o.rotate, o.dither, o.threshold);
+        imgData = await processImageBitmap(lastBitmap, o.rotate, o);
       }
       updateImgPreview();
       if (isConnected) document.getElementById('btn-img-print').disabled = false;
@@ -866,7 +884,7 @@ function initDrawTab() {
 
     // Packing depuis le canvas de dessin
     var idata  = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
-    var packed = packBitmap(idata.data, drawCanvas.width, drawCanvas.height, false, 128);
+    var packed = packBitmap(idata.data, drawCanvas.width, drawCanvas.height, { algo: 'threshold', threshold: 128 });
     try {
       await doPrint(packed, Math.ceil(drawCanvas.width / 8), drawCanvas.height,
                     { density: density, speed: speed, feed: feed, minHeight: 0 });
